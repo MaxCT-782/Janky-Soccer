@@ -11,6 +11,12 @@ public class Ball {
     public float getSpeed(){
         return speed;
     }
+    public void speedUp(){
+        speed++;
+    }
+    public void speedDown(){
+        speed--;
+    }
     public void setY(boolean b){
         y=b;
     }

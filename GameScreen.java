@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.math.Circle;
+import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
@@ -33,7 +34,8 @@ public class GameScreen implements Screen {
     Rectangle ballRectangle;
     Rectangle player1Rectangle;
     Rectangle player2Rectangle;
-    // float speed3;
+    float ballSpeedx;
+    float ballSpeedY;
     Ball ball;
     Circle ballCircle;
     // public BitmapFont font;
@@ -68,6 +70,7 @@ public class GameScreen implements Screen {
         ballRectangle = new Rectangle();
         player1Rectangle = new Rectangle();
         player2Rectangle = new Rectangle();
+        ballCircle = new Circle();
         rect();
 
         ball = new Ball();
@@ -98,6 +101,7 @@ public class GameScreen implements Screen {
 	 private void input() {
         float speed = 4f;
         float delta = Gdx.graphics.getDeltaTime();
+
 
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
             if(player2Sprite.getX()<(7.5))
@@ -147,15 +151,25 @@ public class GameScreen implements Screen {
 		float worldHeight = game.viewport.getWorldHeight();
 		float delta = Gdx.graphics.getDeltaTime();
 		float speed2 = 20f;
+        double angle;
+        double cx1 = player1Sprite.getX();
+        double cx2 = player2Sprite.getX();
+        double cy1 = player1Sprite.getY();
+        double cy2 = player2Sprite.getY();
+        double xInp;
+        double yInp;
         
         // rectangle stuff
 		rect();
 
         // player on player collision
 		if(player1Rectangle.overlaps(player2Rectangle)){
-			System.out.println("Im overlapping it");
-            
+			//System.out.println("Im overlapping it");
+                xInp = cx1-cx2;
+                yInp = cy1-cy2;
+                angle = Math.tan(xInp/yInp);
                 if(player1Sprite.getX()>player2Sprite.getX()){
+                    
                     player1Sprite.translateX(speed2 * delta);
                     player2Sprite.translateX(-speed2 * delta);
                     // rect();
@@ -175,50 +189,92 @@ public class GameScreen implements Screen {
                 }
 		}
         // if player 1 hits the ball
-        if(player1Rectangle.contains(ballCircle)){
-            System.out.println("ancara messi");
+        if(Intersector.overlaps(ballCircle, player1Rectangle)){
+            //ball.setSpeed(2f);
+            ball.speedUp();
+            //System.out.println("ancara messi");
             if(player1Sprite.getX()>ballSprite.getX()){
-                ballSprite.translateX(-speed2 * delta);
+                //ballSprite.translateX(-speed2 * delta);
+                ball.setX(false);
                 // rect();
             }else if(player1Sprite.getX()<ballSprite.getX()){
-                ballSprite.translateX(speed2 * delta);
+                //ballSprite.translateX(speed2 * delta);
+                ball.setX(true);
                 // rect();
             }
             if(player1Sprite.getY()>ballSprite.getY()){
-                ballSprite.translateY(-speed2 * delta);
+                //ballSprite.translateY(-speed2 * delta);
+                ball.setY(false);
                 // rect();
             }else if(player1Sprite.getY()<ballSprite.getY()){
-                ballSprite.translateY(speed2 * delta);
+                //ballSprite.translateY(speed2 * delta);
+                ball.setY(true);
                 // rect();
             }
         }
         // if player 2 hits the ball
-        if(player2Rectangle.contains(ballCircle)){
-            System.out.println("too far for ronaldo");
+        if(Intersector.overlaps(ballCircle, player2Rectangle)){
+            // ball.setSpeed(100f);
+            ball.speedUp();
+            //System.out.println("too far for ronaldo");
             if(player2Sprite.getX()>ballSprite.getX()){
-                ballSprite.translateX(-speed2 * delta);
+                //ballSprite.translateX(-speed2 * delta);
+                ball.setX(false);
                 // rect();
             }else if(player2Sprite.getX()<ballSprite.getX()){
-                ballSprite.translateX(speed2 * delta);
+                //ballSprite.translateX(speed2 * delta);
+                ball.setX(true);
                 // rect();
             }
             if(player2Sprite.getY()>ballSprite.getY()){
-                ballSprite.translateY(speed2 * delta);
+                //ballSprite.translateY(speed2 * delta);
+                ball.setY(false);
                 // rect();
             }else if(player2Sprite.getY()<ballSprite.getY()){
-                ballSprite.translateY(speed2 * delta);
+                //ballSprite.translateY(speed2 * delta);
+                ball.setY(true);
                 // rect();
             }
         }
+        ballSpeedx = ball.getSpeed();
+        ballSpeedY = ball.getSpeed();
         if(ball.getX()==true){
-            ballSprite.translateX(ball.getSpeed() * delta);
+            if(ballSprite.getX()<7.8){
+                ballSprite.translateX(ballSpeedx * delta);
+            }else{
+                ballSprite.translateX(-ballSpeedx * delta);
+                ball.setX(false);
+                ball.speedDown();
+            }
         }else{
-            ballSprite.translateX(-ball.getSpeed() * delta);
+            if(ballSprite.getX()>0.2){
+                ballSprite.translateX(-ballSpeedx * delta);
+            }else{
+                ballSprite.translateX(ballSpeedx * delta);
+                ball.setX(true);
+                ball.speedDown();
+            }
         }
         if(ball.getY()==true){
-            ballSprite.translateY(ball.getSpeed() * delta);
+            if(ballSprite.getY()<4.8){
+                ballSprite.translateY(ballSpeedY * delta);
+            }else{
+                ballSprite.translateY(-ballSpeedY * delta);
+                ball.setY(false);
+                ball.speedDown();
+            }
         }else{
-            ballSprite.translateY(-ball.getSpeed() * delta);
+            if(ballSprite.getY()>0.2){
+                ballSprite.translateY(-ballSpeedY * delta);
+            }else{
+                ballSprite.translateY(ballSpeedY * delta);
+                ball.setY(true);
+                ball.speedDown();
+            }
+        }
+        if(ballSprite.getX()>8||ballSprite.getX()<0||ballSprite.getY()<0||ballSprite.getY()>5){
+            ballSprite.setPosition(3.87f,2.4f);
+            ball.setSpeed(0);
         }
         // player1Rectangle.set(player1Sprite.getX(),player1Rectangle.getY(),player1Sprite.getWidth(),player1Sprite.getHeight());
 		// player2Rectangle.set(player2Sprite.getX(),player2Rectangle.getY(),player2Sprite.getWidth(),player2Sprite.getHeight());
@@ -267,5 +323,12 @@ public class GameScreen implements Screen {
         player1Rectangle.set(player1Sprite.getX(),player1Sprite.getY(),0.2f,0.6f);//player1Sprite.getWidth(),player1Sprite.getHeight());
 		player2Rectangle.set(player2Sprite.getX(),player2Sprite.getY(),0.2f,0.6f);//player2Sprite.getWidth(),player2Sprite.getHeight());
         ballCircle.set(ballSprite.getX(),ballSprite.getY(), .1f);
+        ballRectangle.set(ballSprite.getX(),ballSprite.getY(),0.2f,0.2f);
+    }
+    public void reset(){
+        ballSprite.setPosition(3.87f,2.4f);
+        ball.setSpeed(0);
+        player1Sprite.setPosition(1,2);
+        player2Sprite.setPosition(6,2);
     }
 }
