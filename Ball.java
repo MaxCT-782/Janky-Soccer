@@ -1,5 +1,6 @@
 public class Ball {
     float speed;
+    
     boolean y;
     boolean x;
     public Ball(){
@@ -12,10 +13,10 @@ public class Ball {
         return speed;
     }
     public void speedUp(){
-        speed++;
+        speed+=3f;
     }
     public void speedDown(){
-        speed--;
+        speed-=2f;
     }
     public void setY(boolean b){
         y=b;

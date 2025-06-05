@@ -19,6 +19,12 @@ import com.badlogic.gdx.utils.ScreenUtils;
 public class GameScreen implements Screen {
 	final JankySoccer game;
     
+    // scoreboard mechanics
+    double secondsLeft;
+    int seconds;
+    int score1;
+    int score2;
+
 	Texture backgroundTexture;
     Texture ballTexture;
     Texture player1Texture;
@@ -74,7 +80,9 @@ public class GameScreen implements Screen {
         rect();
 
         ball = new Ball();
-        
+
+        // setting the timer
+        secondsLeft = 90;
         // music.setLooping(true);
         // music.setVolume(.5f);
         // music.play();
@@ -102,7 +110,9 @@ public class GameScreen implements Screen {
         float speed = 4f;
         float delta = Gdx.graphics.getDeltaTime();
 
-
+        if(Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
+            reset();
+        }
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
             if(player2Sprite.getX()<(7.5))
                 player2Sprite.translateX(speed * delta);
@@ -151,130 +161,261 @@ public class GameScreen implements Screen {
 		float worldHeight = game.viewport.getWorldHeight();
 		float delta = Gdx.graphics.getDeltaTime();
 		float speed2 = 20f;
+        /* bunch of variables for the triangle math
+         the angles will be found using tangents
+         the numbers 1 and 2 indicate which player the number is relevant to
+         cx means center x, and cy means center y (taken from the center point of the sprites)
+         b for bx and by mean ball x and ball y, taken the same way
+         x/yInp (x/y input) 
+        angles are the an
+        */
         double angle;
+        double angle2;
+        double ballAngle;
+        
         double cx1 = player1Sprite.getX();
         double cx2 = player2Sprite.getX();
         double cy1 = player1Sprite.getY();
         double cy2 = player2Sprite.getY();
+        double bx = ballSprite.getX();
+        double by = ballSprite.getY();
         double xInp;
         double yInp;
         
+        // Timer stuff
+
+        secondsLeft -= delta;
+        seconds = (int)(secondsLeft);
+
+        // seconds.tick(delta);
+        // secondsLeft = seconds.getElapsed();
+        // System.out.println(secondsLeft);
+
+        
+                
         // rectangle stuff
 		rect();
+        
+        /* how the math works
+        With the center points of each rectangle, a right triangle can be formed
+        Using the arctan (opposite/adjacent) of the triangle lengths, the angle from center 1 to center 2 is found
+        Using cos for x, and sin for y, the movement becomes more angled and contact specific
+        */
 
+        
         // player on player collision
 		if(player1Rectangle.overlaps(player2Rectangle)){
 			//System.out.println("Im overlapping it");
+
+
                 xInp = cx1-cx2;
                 yInp = cy1-cy2;
-                angle = Math.tan(xInp/yInp);
-                if(player1Sprite.getX()>player2Sprite.getX()){
+                angle = Math.atan(xInp/yInp);
+                angle2 = angle + Math.PI;
+                float x1 = speed2 * delta * (float)(Math.cos(angle));
+                if(cx1>cx2){
+                    player1Sprite.translateX(x1);
+                    player2Sprite.translateX(-x1);
+                }else{
+                    player1Sprite.translateX(-x1);
+                    player2Sprite.translateX(x1);
+                }
+                float y1 = speed2 * delta * (float)(Math.sin(angle));
+                player1Sprite.translateY(y1);
+                player2Sprite.translateY(-y1);
+                // if(player1Sprite.getX()>player2Sprite.getX()){
                     
-                    player1Sprite.translateX(speed2 * delta);
-                    player2Sprite.translateX(-speed2 * delta);
-                    // rect();
-                }else{
-                    player1Sprite.translateX(-speed2 * delta);
-                    player2Sprite.translateX(speed2 * delta);
-                    // rect();
-                }
-                if(player1Sprite.getY()>player2Sprite.getY()){
-                    player1Sprite.translateY(speed2 * delta);
-                    player2Sprite.translateY(-speed2 * delta);
-                    // rect();
-                }else{
-                    player1Sprite.translateY(-speed2 * delta);
-                    player2Sprite.translateY(speed2 * delta);
-                    // rect();
-                }
+                //     player1Sprite.translateX(speed2 * delta);
+                //     player2Sprite.translateX(-speed2 * delta);
+                //     // rect();
+                // }else{
+                //     player1Sprite.translateX(-speed2 * delta);
+                //     player2Sprite.translateX(speed2 * delta);
+                //     // rect();
+                // }
+                // if(player1Sprite.getY()>player2Sprite.getY()){
+                //     player1Sprite.translateY(speed2 * delta);
+                //     player2Sprite.translateY(-speed2 * delta);
+                //     // rect();
+                // }else{
+                //     player1Sprite.translateY(-speed2 * delta);
+                //     player2Sprite.translateY(speed2 * delta);
+                //     // rect();
+                // }
 		}
         // if player 1 hits the ball
         if(Intersector.overlaps(ballCircle, player1Rectangle)){
-            //ball.setSpeed(2f);
             ball.speedUp();
-            //System.out.println("ancara messi");
-            if(player1Sprite.getX()>ballSprite.getX()){
-                //ballSprite.translateX(-speed2 * delta);
-                ball.setX(false);
-                // rect();
-            }else if(player1Sprite.getX()<ballSprite.getX()){
-                //ballSprite.translateX(speed2 * delta);
-                ball.setX(true);
-                // rect();
+            xInp = cx1-bx;
+            yInp = cy1-by;
+            ballAngle = Math.atan(xInp/yInp);
+            float x = ball.getSpeed() * delta * (float)(Math.cos(ballAngle));
+            float y = ball.getSpeed() * delta * (float)(Math.sin(ballAngle));
+            // if(cx1>bx){
+            //     x= -x;
+            // }
+            if(xInp>0&&yInp>0){
+                ballSpeedx = -x;
+                ballSpeedY = -y;
+                // ball.setX(false);
+                // ball.setY(false);
+            }else if(xInp>0&&yInp<0){
+                ballSpeedx = -x;
+                ballSpeedY = -y;
+                // ball.setX(false);
+                // ball.setY(true);
+            }else if(xInp<0&&yInp>0){
+                ballSpeedx = x;
+                ballSpeedY = y;
+                // ball.setX(true);
+                // ball.setY(false);
+            } else{
+                ballSpeedx = x;
+                ballSpeedY = y;
+                // ball.setX(true);
+                // ball.setY(true);
             }
-            if(player1Sprite.getY()>ballSprite.getY()){
-                //ballSprite.translateY(-speed2 * delta);
-                ball.setY(false);
-                // rect();
-            }else if(player1Sprite.getY()<ballSprite.getY()){
-                //ballSprite.translateY(speed2 * delta);
+            
+            if(ballSpeedY>0){
                 ball.setY(true);
-                // rect();
+            }else{
+                ball.setY(false);
             }
+            if(ballSpeedx>0){
+                ball.setX(true);
+            }else{
+                ball.setX(false);
+            }
+            // if(player1Sprite.getX()>ballSprite.getX()){
+            //     //ballSprite.translateX(-speed2 * delta);
+            //     ball.setX(false);
+            //     // rect();
+            // }else if(player1Sprite.getX()<ballSprite.getX()){
+            //     //ballSprite.translateX(speed2 * delta);
+            //     ball.setX(true);
+            //     // rect();
+            // }
+            // if(player1Sprite.getY()>ballSprite.getY()){
+            //     //ballSprite.translateY(-speed2 * delta);
+            //     ball.setY(false);
+            //     // rect();
+            // }else if(player1Sprite.getY()<ballSprite.getY()){
+            //     //ballSprite.translateY(speed2 * delta);
+            //     ball.setY(true);
+            //     // rect();
+            // }
         }
         // if player 2 hits the ball
         if(Intersector.overlaps(ballCircle, player2Rectangle)){
-            // ball.setSpeed(100f);
             ball.speedUp();
-            //System.out.println("too far for ronaldo");
-            if(player2Sprite.getX()>ballSprite.getX()){
-                //ballSprite.translateX(-speed2 * delta);
-                ball.setX(false);
-                // rect();
-            }else if(player2Sprite.getX()<ballSprite.getX()){
-                //ballSprite.translateX(speed2 * delta);
-                ball.setX(true);
-                // rect();
+            xInp = cx2-bx;
+            yInp = cy2-by;
+            ballAngle = Math.atan(xInp/yInp);
+            float x = ball.getSpeed() * delta * (float)(Math.cos(ballAngle));
+            float y = ball.getSpeed() * delta * (float)(Math.sin(ballAngle));
+            // if(x>0){
+            //     ball.setX(true);
+            // }else{
+            //     ball.setX(false);
+            // }
+            if(xInp>0&&yInp>0){
+                ballSpeedx = -x;
+                ballSpeedY = -y;
+                // ball.setX(false);
+                // ball.setY(false);
+            }else if(xInp>0&&yInp<0){
+                ballSpeedx = -x;
+                ballSpeedY = -y;
+                // ball.setX(false);
+                // ball.setY(true);
+            }else if(xInp<0&&yInp>0){
+                ballSpeedx = x;
+                ballSpeedY = y;
+                // ball.setX(true);
+                // ball.setY(false);
+            } else{
+                ballSpeedx = x;
+                ballSpeedY = y;
+                // ball.setX(true);
+                // ball.setY(true);
             }
-            if(player2Sprite.getY()>ballSprite.getY()){
-                //ballSprite.translateY(speed2 * delta);
-                ball.setY(false);
-                // rect();
-            }else if(player2Sprite.getY()<ballSprite.getY()){
-                //ballSprite.translateY(speed2 * delta);
+            
+            if(ballSpeedY>0){
                 ball.setY(true);
-                // rect();
+            }else{
+                ball.setY(false);
             }
+            if(ballSpeedx>0){
+                ball.setX(true);
+            }else{
+                ball.setX(false);
+            }
+            
+            
+            // if(player2Sprite.getX()>ballSprite.getX()){
+            //     //ballSprite.translateX(-speed2 * delta);
+            //     ball.setX(false);
+            //     // rect();
+            // }else if(player2Sprite.getX()<ballSprite.getX()){
+            //     //ballSprite.translateX(speed2 * delta);
+            //     ball.setX(true);
+            //     // rect();
+            // }
+            // if(player2Sprite.getY()>ballSprite.getY()){
+            //     //ballSprite.translateY(speed2 * delta);
+            //     ball.setY(false);
+            //     // rect();
+            // }else if(player2Sprite.getY()<ballSprite.getY()){
+            //     //ballSprite.translateY(speed2 * delta);
+            //     ball.setY(true);
+            //     // rect();
+            // }
         }
-        ballSpeedx = ball.getSpeed();
-        ballSpeedY = ball.getSpeed();
+        ballSprite.translateX(ballSpeedx * delta);
+        ballSprite.translateY(ballSpeedY * delta);
         if(ball.getX()==true){
             if(ballSprite.getX()<7.8){
-                ballSprite.translateX(ballSpeedx * delta);
+                // ballSprite.translateX(ballSpeedx * delta);
             }else{
-                ballSprite.translateX(-ballSpeedx * delta);
+                // ballSprite.translateX(-ballSpeedx * delta);
+                ballSpeedx = -ballSpeedx;
                 ball.setX(false);
                 ball.speedDown();
             }
         }else{
             if(ballSprite.getX()>0.2){
-                ballSprite.translateX(-ballSpeedx * delta);
+                // ballSprite.translateX(ballSpeedx * delta);
             }else{
-                ballSprite.translateX(ballSpeedx * delta);
+                // ballSprite.translateX(-ballSpeedx * delta);
+                ballSpeedx = -ballSpeedx;
                 ball.setX(true);
                 ball.speedDown();
             }
         }
         if(ball.getY()==true){
             if(ballSprite.getY()<4.8){
-                ballSprite.translateY(ballSpeedY * delta);
+                // ballSprite.translateY(ballSpeedY * delta);
             }else{
-                ballSprite.translateY(-ballSpeedY * delta);
+                // ballSprite.translateY(-ballSpeedY * delta);
+                ballSpeedY = -ballSpeedY;
                 ball.setY(false);
                 ball.speedDown();
             }
         }else{
             if(ballSprite.getY()>0.2){
-                ballSprite.translateY(-ballSpeedY * delta);
+                // ballSprite.translateY(ballSpeedY * delta);
             }else{
-                ballSprite.translateY(ballSpeedY * delta);
+                // ballSprite.translateY(-ballSpeedY * delta);
+                ballSpeedY = -ballSpeedY;
                 ball.setY(true);
                 ball.speedDown();
             }
         }
         if(ballSprite.getX()>8||ballSprite.getX()<0||ballSprite.getY()<0||ballSprite.getY()>5){
-            ballSprite.setPosition(3.87f,2.4f);
-            ball.setSpeed(0);
+        //     ballSprite.setPosition(3.87f,2.4f);
+        //     ball.setSpeed(0);
+        //     ballSpeedY=0;
+        //     ballSpeedx=0;
         }
         // player1Rectangle.set(player1Sprite.getX(),player1Rectangle.getY(),player1Sprite.getWidth(),player1Sprite.getHeight());
 		// player2Rectangle.set(player2Sprite.getX(),player2Rectangle.getY(),player2Sprite.getWidth(),player2Sprite.getHeight());
@@ -330,5 +471,7 @@ public class GameScreen implements Screen {
         ball.setSpeed(0);
         player1Sprite.setPosition(1,2);
         player2Sprite.setPosition(6,2);
+        ballSpeedY=0;
+        ballSpeedx=0;
     }
 }
