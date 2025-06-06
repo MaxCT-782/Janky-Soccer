@@ -13,7 +13,7 @@ public class Ball {
         return speed;
     }
     public void speedUp(){
-        speed+=3f;
+        speed+=50f;
     }
     public void speedDown(){
         speed-=2f;

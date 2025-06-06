@@ -44,6 +44,8 @@ public class GameScreen implements Screen {
     float ballSpeedY;
     Ball ball;
     Circle ballCircle;
+    public int p1Score;
+    public int p2Score;
     // public BitmapFont font;
     // public SpriteBatch batch;
 
@@ -80,6 +82,8 @@ public class GameScreen implements Screen {
         rect();
 
         ball = new Ball();
+        p1Score = 0;
+        p2Score = 0;
 
         // setting the timer
         secondsLeft = 90;
@@ -104,6 +108,10 @@ public class GameScreen implements Screen {
 		input();
 		logic();
 		draw();
+        if (secondsLeft <00) {
+			game.setScreen(new EndScreen(game));
+			dispose();
+		}
 	}
 
 	 private void input() {
@@ -373,6 +381,12 @@ public class GameScreen implements Screen {
         }
         ballSprite.translateX(ballSpeedx * delta);
         ballSprite.translateY(ballSpeedY * delta);
+        if(ballSprite.getX()<0.2 && ballSprite.getY()<2.95f && ballSprite.getY()>1.7f){
+            goal(2);
+        }
+        if(ballSprite.getX()>7.8 && ballSprite.getY()<2.95f && ballSprite.getY()>1.7f){
+            goal(1);
+        }
         if(ball.getX()==true){
             if(ballSprite.getX()<7.8){
                 // ballSprite.translateX(ballSpeedx * delta);
@@ -436,6 +450,9 @@ public class GameScreen implements Screen {
         player1Sprite.draw(game.spriteBatch);
         player2Sprite.draw(game.spriteBatch);
 
+        game.font.draw(game.spriteBatch,  seconds + "", (worldWidth/2)-.1f, worldHeight-.1f);
+        game.font.draw(game.spriteBatch, p1Score + "", .1f , worldHeight-.1f);
+        game.font.draw(game.spriteBatch, p2Score + "", worldWidth-.175f , worldHeight-.1f);
         game.spriteBatch.end();
     }
 
@@ -474,4 +491,14 @@ public class GameScreen implements Screen {
         ballSpeedY=0;
         ballSpeedx=0;
     }
+    public void goal(int p){
+        game.score(p);
+        if(p==1){
+            p1Score++;
+        }else{
+            p2Score++;
+        }
+        reset();
+    }
+    
 }
